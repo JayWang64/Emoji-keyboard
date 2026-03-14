@@ -173,7 +173,7 @@
 <h1>Emoji Keyboard</h1>
 
 <!-- Document area -->
-<div id="doc" contenteditable="true" aria-label="Emoji document"></div>
+<div id="doc" aria-label="Emoji document"></div>
 
 <!-- Toolbar -->
 <div class="toolbar">
@@ -273,23 +273,7 @@ function buildKeys() {
 // ─── Core Actions ───
 function typeEmoji(emoji, name) {
   const doc = document.getElementById("doc");
-  doc.focus();
-
-  // Insert at cursor position (or end)
-  const sel = window.getSelection();
-  if (sel.rangeCount && doc.contains(sel.anchorNode)) {
-    const range = sel.getRangeAt(0);
-    range.deleteContents();
-    range.insertNode(document.createTextNode(emoji));
-    range.collapse(false);
-  } else {
-    doc.appendChild(document.createTextNode(emoji));
-  }
-
-  // Move cursor after inserted emoji
-  const s = window.getSelection();
-  if (s.rangeCount) { const r = s.getRangeAt(0); r.collapse(false); }
-
+  doc.appendChild(document.createTextNode(emoji));
   announce(emoji, name);
 }
 
@@ -331,22 +315,12 @@ function backspace() {
 
 function addNewline() {
   const doc = document.getElementById("doc");
-  doc.focus();
-  document.execCommand("insertLineBreak");
+  doc.appendChild(document.createElement("br"));
 }
 
 function addSpace() {
   const doc = document.getElementById("doc");
-  doc.focus();
-  const sel = window.getSelection();
-  if (sel.rangeCount && doc.contains(sel.anchorNode)) {
-    const range = sel.getRangeAt(0);
-    range.deleteContents();
-    range.insertNode(document.createTextNode(" "));
-    range.collapse(false);
-  } else {
-    doc.appendChild(document.createTextNode(" "));
-  }
+  doc.appendChild(document.createTextNode(" "));
 }
 
 function printDoc() {
