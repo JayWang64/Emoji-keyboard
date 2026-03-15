@@ -297,10 +297,13 @@ function typeEmoji(emoji, name) {
 function announce(emoji, name) {
   document.getElementById("announce").textContent = `${emoji} ${name}`;
   speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(name);
-  utter.rate = 0.9;
-  utter.pitch = 1.1;
-  speechSynthesis.speak(utter);
+  // Short delay after cancel() fixes Chrome desktop silently dropping utterances
+  setTimeout(() => {
+    const utter = new SpeechSynthesisUtterance(name);
+    utter.rate = 0.9;
+    utter.pitch = 1.1;
+    speechSynthesis.speak(utter);
+  }, 50);
 }
 
 function showClear() {
