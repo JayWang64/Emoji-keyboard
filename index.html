@@ -297,13 +297,28 @@ function typeEmoji(emoji, name) {
 function announce(emoji, name) {
   document.getElementById("announce").textContent = `${emoji} ${name}`;
   speechSynthesis.cancel();
-  // Short delay after cancel() fixes Chrome desktop silently dropping utterances
-  setTimeout(() => {
+  // Chrome desktop requires a longer delay after cancel() and may need
+  // voices to be loaded before speak() will produce audio.
+  const doSpeak = () => {
     const utter = new SpeechSynthesisUtterance(name);
     utter.rate = 0.9;
     utter.pitch = 1.1;
+    // Pick a default voice explicitly (Chrome sometimes has no default)
+    const voices = speechSynthesis.getVoices();
+    if (voices.length) {
+      utter.voice = voices.find(v => v.lang.startsWith("en")) || voices[0];
+    }
     speechSynthesis.speak(utter);
-  }, 50);
+  };
+  // Ensure voices are loaded before speaking
+  if (speechSynthesis.getVoices().length) {
+    setTimeout(doSpeak, 100);
+  } else {
+    speechSynthesis.onvoiceschanged = () => {
+      speechSynthesis.onvoiceschanged = null;
+      setTimeout(doSpeak, 100);
+    };
+  }
 }
 
 function showClear() {
@@ -337,6 +352,14 @@ function addNewline() {
 function addSpace() {
   const doc = document.getElementById("doc");
   doc.appendChild(document.createTextNode(" "));
+}
+
+// Warm up Chrome speech synthesis — trigger voice loading early
+if (typeof speechSynthesis !== "undefined") {
+  speechSynthesis.getVoices();
+  if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = () => { speechSynthesis.getVoices(); };
+  }
 }
 </script>
 </body>
