@@ -29,31 +29,46 @@
   #header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    position: relative;
+    justify-content: space-between;
     padding: 6px 0;
     flex-shrink: 0;
+    gap: 8px;
   }
   #header h1 {
     font-size: 1.3rem;
     color: #4a3f8a;
+    white-space: nowrap;
   }
-  #clear-btn {
-    position: absolute;
-    right: 4px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    font-size: 1.2rem;
+  #header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  #announce {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #6c5bbf;
+    white-space: nowrap;
+  }
+  #header-right button {
+    padding: 6px 12px;
+    border: 2px solid #c5b8f0;
+    border-radius: 10px;
+    background: #fff;
+    color: #5b4a9e;
+    font-size: .8rem;
+    font-weight: 600;
     cursor: pointer;
-    padding: 4px 6px;
-    border-radius: 8px;
-    color: #9a8cc4;
     transition: all .15s;
+    white-space: nowrap;
   }
-  #clear-btn:hover { background: #ede8ff; color: #6c5bbf; }
-  #clear-btn:active { transform: translateY(-50%) scale(.9); }
+  #header-right button:hover { background: #ede8ff; }
+  #header-right button:active { transform: scale(.95); }
+  #clear-btn {
+    background: #fff !important;
+    border: 2px solid #c5b8f0 !important;
+  }
 
   /* ---------- Document Canvas ---------- */
   #doc-wrap {
@@ -81,39 +96,6 @@
     font-size: 1.3rem;
   }
 
-  /* ---------- Announcement ---------- */
-  #announce {
-    text-align: center;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #6c5bbf;
-    height: 32px;
-    line-height: 32px;
-    flex-shrink: 0;
-    margin: 4px 0;
-  }
-
-  /* ---------- Quick Actions ---------- */
-  #actions {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-bottom: 6px;
-  }
-  #actions button {
-    padding: 6px 16px;
-    border: 2px solid #c5b8f0;
-    border-radius: 10px;
-    background: #fff;
-    color: #5b4a9e;
-    font-size: .85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .15s;
-  }
-  #actions button:hover { background: #ede8ff; }
-  #actions button:active { transform: scale(.95); }
 
   /* ---------- Keyboard ---------- */
   #keyboard {
@@ -203,22 +185,18 @@
   <!-- Header -->
   <div id="header">
     <h1>Emoji Keyboard</h1>
-    <button id="clear-btn" onclick="showClear()" title="Clear all">🧹</button>
+    <div id="header-right">
+      <span id="announce" aria-live="polite"></span>
+      <button onclick="backspace()">Backspace</button>
+      <button onclick="addSpace()">Space</button>
+      <button onclick="addNewline()">New Line</button>
+      <button id="clear-btn" onclick="showClear()" title="Clear all">Clear</button>
+    </div>
   </div>
 
   <!-- Document canvas (fixed height, scrollable) -->
   <div id="doc-wrap">
     <div id="doc" aria-label="Emoji document"></div>
-  </div>
-
-  <!-- Announcement -->
-  <div id="announce" aria-live="polite"></div>
-
-  <!-- Quick action buttons -->
-  <div id="actions">
-    <button onclick="backspace()">Backspace</button>
-    <button onclick="addSpace()">Space</button>
-    <button onclick="addNewline()">New Line</button>
   </div>
 
   <!-- Keyboard (scrollable, fills remaining space) -->
