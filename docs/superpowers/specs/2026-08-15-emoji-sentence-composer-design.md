@@ -179,3 +179,28 @@ Vitest, no browser needed.
 
 Work happens on `feature/emoji-sentence-composer`, branched from the repo's
 existing head. The remote is SSH.
+
+---
+
+## Amendment, 2026-08-15: reading progress, Stop, wrapping strip
+
+Approved after the first build shipped.
+
+- Play no longer speaks one joined sentence. It speaks one word per emoji in
+  sequence, chaining on each utterance's `onend`. This is what makes an honest
+  per-emoji highlight and progress bar possible, at the cost of a small gap
+  between words.
+- `buildSentence` is replaced by `buildWords(map, emojis): string[]`.
+- `useSpeech` gains `speakSequence(words)`, `stop()` and `speakingIndex`.
+  A run counter guards the chain: `cancel()` makes some browsers fire `onend`
+  for the utterance they interrupt, and without the guard a stopped run would
+  keep advancing. An utterance that errors skips to the next word rather than
+  stalling the row.
+- `Composer` highlights the emoji at `speakingIndex`, shows a progress bar that
+  fills by words completed, and swaps Play for a red Stop while reading. The
+  bar is hidden when silent. Undo and Clear stay usable while reading, and both
+  stop the reading first so the highlight cannot point at a shifted row.
+- The strip wraps onto new rows instead of scrolling sideways. It grows to
+  about three rows (`max-height: 200px`), then scrolls vertically.
+- Stop shares Play's slot rather than being a fourth button, to keep the touch
+  targets large on a phone.

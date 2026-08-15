@@ -3,8 +3,10 @@
 A talking emoji keyboard for young children.
 
 - Tap an emoji and it is spoken out loud straight away.
-- Taps collect in a strip at the top.
-- Press **Play** and the whole strip is read as one sentence.
+- Taps collect in a strip at the top, wrapping onto new rows as it fills.
+- Press **Play** and the whole strip is read out, one emoji at a time. The
+  emoji being read lights up and a bar shows how far along it is.
+- While it is reading, Play turns into **Stop**.
 - **Undo** removes the last emoji. **Clear** empties the strip.
 
 ## Running it
