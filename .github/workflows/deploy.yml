@@ -33,8 +33,10 @@ jobs:
 
       - run: npm run build
 
-      - uses: actions/configure-pages@v5
-
+      # No configure-pages step: its only job is to work out the base path,
+      # and vite.config.ts already hardcodes /Emoji-keyboard/. It also fails
+      # outright if Pages is not enabled yet, which is a needless way to
+      # break the build.
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
