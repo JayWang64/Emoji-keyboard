@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildLabelMap,
-  buildSentence,
+  buildWords,
   lookupLabel,
   normalize,
   overrides,
@@ -86,18 +86,20 @@ describe('lookupLabel', () => {
   })
 })
 
-describe('buildSentence', () => {
-  it('joins words in tap order', () => {
-    expect(buildSentence(map, ['🐶', '🍎', '😀'])).toBe(
-      'dog face, red apple, grinning face',
-    )
+describe('buildWords', () => {
+  it('returns one word per emoji, in tap order', () => {
+    expect(buildWords(map, ['🐶', '🍎', '😀'])).toEqual([
+      'dog face',
+      'red apple',
+      'grinning face',
+    ])
   })
 
-  it('returns an empty string for no emoji', () => {
-    expect(buildSentence(map, [])).toBe('')
+  it('returns an empty list for no emoji', () => {
+    expect(buildWords(map, [])).toEqual([])
   })
 
   it('handles a single emoji', () => {
-    expect(buildSentence(map, ['🥔'])).toBe('potato')
+    expect(buildWords(map, ['🥔'])).toEqual(['potato'])
   })
 })

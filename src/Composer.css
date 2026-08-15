@@ -10,11 +10,16 @@
 
 .composer-strip {
   display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
   align-items: center;
   gap: 4px;
   min-height: 64px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  /* Grows down to roughly three rows, then scrolls rather than eating
+     the picker below it. */
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 4px;
 }
 
@@ -22,6 +27,31 @@
   font-size: 2.75rem;
   line-height: 1;
   flex-shrink: 0;
+  border-radius: 12px;
+  padding: 2px 4px;
+  transition:
+    transform 120ms ease-out,
+    background-color 120ms ease-out;
+}
+
+.composer-emoji.is-speaking {
+  background: #fff3c4;
+  outline: 3px solid #f2c200;
+  transform: scale(1.15);
+}
+
+.composer-progress {
+  height: 10px;
+  border-radius: 999px;
+  background: #ece8fb;
+  overflow: hidden;
+}
+
+.composer-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #6c5bbf;
+  transition: width 140ms linear;
 }
 
 .composer-hint {
@@ -58,4 +88,22 @@
   background: #d9f5e0;
   border-color: #8fd8a6;
   color: #256b3c;
+}
+
+.composer-stop {
+  flex: 2;
+  background: #ffe0e0;
+  border-color: #eb9a9a;
+  color: #a32222;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer-emoji,
+  .composer-progress-fill {
+    transition: none;
+  }
+
+  .composer-emoji.is-speaking {
+    transform: none;
+  }
 }

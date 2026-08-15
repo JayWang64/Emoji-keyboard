@@ -1,13 +1,13 @@
 import { useCallback, useMemo, useState } from 'react'
 import Composer from './Composer'
 import EmojiPicker from './EmojiPicker'
-import { buildLabelMap, buildSentence, lookupLabel } from './labels'
+import { buildLabelMap, buildWords, lookupLabel } from './labels'
 import { useSpeech } from './useSpeech'
 import './App.css'
 
 export default function App() {
   const labelMap = useMemo(() => buildLabelMap(), [])
-  const { isSupported, speak } = useSpeech()
+  const { isSupported, speakingIndex, speak, speakSequence, stop } = useSpeech()
   const [emojis, setEmojis] = useState<string[]>([])
 
   const handleSelect = useCallback(
@@ -21,16 +21,19 @@ export default function App() {
   )
 
   const handlePlay = useCallback(() => {
-    speak(buildSentence(labelMap, emojis))
-  }, [emojis, labelMap, speak])
+    speakSequence(buildWords(labelMap, emojis))
+  }, [emojis, labelMap, speakSequence])
 
   const handleBackspace = useCallback(() => {
+    // Stop first, otherwise the highlight would point at a shifted row.
+    stop()
     setEmojis((current) => current.slice(0, -1))
-  }, [])
+  }, [stop])
 
   const handleClear = useCallback(() => {
+    stop()
     setEmojis([])
-  }, [])
+  }, [stop])
 
   return (
     <main className="app">
@@ -39,7 +42,9 @@ export default function App() {
       <Composer
         emojis={emojis}
         canSpeak={isSupported}
+        speakingIndex={speakingIndex}
         onPlay={handlePlay}
+        onStop={stop}
         onBackspace={handleBackspace}
         onClear={handleClear}
       />

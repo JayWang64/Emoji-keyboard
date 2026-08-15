@@ -36,12 +36,25 @@ function synth(): SpeechSynthesis | null {
   return window.speechSynthesis ?? null
 }
 
-export function useSpeech(): {
+export type Speech = {
   isSupported: boolean
+  /** Position in the current sequence, or null when nothing is being read. */
+  speakingIndex: number | null
+  /** Say one thing now, cutting off whatever was being said. */
   speak: (text: string) => void
-} {
+  /** Say each word in turn, reporting progress through speakingIndex. */
+  speakSequence: (words: string[]) => void
+  stop: () => void
+}
+
+export function useSpeech(): Speech {
   const [isSupported] = useState(() => synth() !== null)
+  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null)
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null)
+  // Bumped whenever a run is started or abandoned. An end event carrying a
+  // stale id is ignored, which matters because cancel() makes some browsers
+  // fire onend for the utterance they just interrupted.
+  const runIdRef = useRef(0)
 
   useEffect(() => {
     const engine = synth()
@@ -55,23 +68,65 @@ export function useSpeech(): {
     return () => engine.removeEventListener?.('voiceschanged', resolve)
   }, [])
 
-  const speak = useCallback((text: string) => {
+  const buildUtterance = useCallback((text: string) => {
     const engine = synth()
-    if (!engine || !text) return
-
     const utterance = new SpeechSynthesisUtterance(text)
-    const voice = voiceRef.current ?? pickVoice(engine.getVoices())
+    const voice = voiceRef.current ?? pickVoice(engine?.getVoices() ?? [])
     if (voice) utterance.voice = voice
     utterance.rate = RATE
     utterance.pitch = PITCH
     utterance.volume = 1
     utterance.lang = LANG
-
-    // Cancel first so a fast-tapping child hears the newest word rather
-    // than a growing backlog.
-    engine.cancel()
-    engine.speak(utterance)
+    return utterance
   }, [])
 
-  return { isSupported, speak }
+  /** Abandon any run in flight and silence the engine. */
+  const halt = useCallback(() => {
+    runIdRef.current += 1
+    synth()?.cancel()
+  }, [])
+
+  const stop = useCallback(() => {
+    halt()
+    setSpeakingIndex(null)
+  }, [halt])
+
+  const speak = useCallback(
+    (text: string) => {
+      const engine = synth()
+      if (!engine || !text) return
+      stop()
+      engine.speak(buildUtterance(text))
+    },
+    [buildUtterance, stop],
+  )
+
+  const speakSequence = useCallback(
+    (words: string[]) => {
+      const engine = synth()
+      if (!engine || words.length === 0) return
+
+      halt()
+      const runId = runIdRef.current
+
+      const sayFrom = (index: number) => {
+        if (runIdRef.current !== runId) return
+        if (index >= words.length) {
+          setSpeakingIndex(null)
+          return
+        }
+        setSpeakingIndex(index)
+        const utterance = buildUtterance(words[index])
+        utterance.onend = () => sayFrom(index + 1)
+        // A word the engine refuses to say should not stall the whole row.
+        utterance.onerror = () => sayFrom(index + 1)
+        engine.speak(utterance)
+      }
+
+      sayFrom(0)
+    },
+    [buildUtterance, halt],
+  )
+
+  return { isSupported, speakingIndex, speak, speakSequence, stop }
 }

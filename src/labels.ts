@@ -48,6 +48,7 @@ export function lookupLabel(map: LabelMap, emoji: string): string {
   return map.get(stripTones(normalized)) ?? map.get(normalized) ?? 'symbol'
 }
 
-export function buildSentence(map: LabelMap, emojis: string[]): string {
-  return emojis.map((emoji) => lookupLabel(map, emoji)).join(', ')
+/** One spoken word per emoji, in tap order. */
+export function buildWords(map: LabelMap, emojis: string[]): string[] {
+  return emojis.map((emoji) => lookupLabel(map, emoji))
 }

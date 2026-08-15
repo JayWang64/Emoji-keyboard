@@ -3,12 +3,22 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 const spoken: string[] = []
+const sequences: string[][] = []
+let stopCount = 0
+let speakingIndex: number | null = null
 
 vi.mock('./useSpeech', () => ({
   useSpeech: () => ({
     isSupported: true,
+    speakingIndex,
     speak: (text: string) => {
       spoken.push(text)
+    },
+    speakSequence: (words: string[]) => {
+      sequences.push(words)
+    },
+    stop: () => {
+      stopCount += 1
     },
   }),
 }))
@@ -37,6 +47,9 @@ import App from './App'
 describe('App', () => {
   beforeEach(() => {
     spoken.length = 0
+    sequences.length = 0
+    stopCount = 0
+    speakingIndex = null
   })
 
   it('speaks each emoji as it is tapped', async () => {
@@ -53,13 +66,37 @@ describe('App', () => {
     expect(screen.getByTestId('strip').textContent).toBe('🐶🍎')
   })
 
-  it('speaks the whole sentence once when Play is pressed', async () => {
+  it('reads every word in tap order when Play is pressed', async () => {
     render(<App />)
     await userEvent.click(screen.getByText('pick dog'))
     await userEvent.click(screen.getByText('pick apple'))
-    spoken.length = 0
     await userEvent.click(screen.getByRole('button', { name: /play/i }))
-    expect(spoken).toEqual(['dog face, red apple'])
+    expect(sequences).toEqual([['dog face', 'red apple']])
+  })
+
+  it('highlights the emoji being read', async () => {
+    speakingIndex = 1
+    render(<App />)
+    await userEvent.click(screen.getByText('pick dog'))
+    await userEvent.click(screen.getByText('pick apple'))
+    const shown = screen.getAllByTestId('composer-emoji')
+    expect(shown[1]).toHaveClass('is-speaking')
+  })
+
+  it('Stop silences the reading', async () => {
+    speakingIndex = 0
+    render(<App />)
+    await userEvent.click(screen.getByText('pick dog'))
+    await userEvent.click(screen.getByRole('button', { name: /stop/i }))
+    expect(stopCount).toBe(1)
+  })
+
+  it('clearing the strip also silences the reading', async () => {
+    speakingIndex = 0
+    render(<App />)
+    await userEvent.click(screen.getByText('pick dog'))
+    await userEvent.click(screen.getByRole('button', { name: /clear/i }))
+    expect(stopCount).toBe(1)
   })
 
   it('undo removes the last emoji only', async () => {

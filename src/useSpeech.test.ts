@@ -38,39 +38,54 @@ describe('pickVoice', () => {
   })
 })
 
-describe('useSpeech', () => {
-  let spoken: SpeechSynthesisUtterance[]
-  let cancelCount: number
+/** Minimal stand-in for the browser's speech engine. */
+type FakeUtterance = SpeechSynthesisUtterance & { onend: (() => void) | null }
 
-  beforeEach(() => {
-    spoken = []
-    cancelCount = 0
-    class FakeUtterance {
-      text: string
-      voice: SpeechSynthesisVoice | null = null
-      rate = 1
-      pitch = 1
-      volume = 1
-      lang = ''
-      constructor(text: string) {
-        this.text = text
-      }
+let spoken: FakeUtterance[]
+let cancelCount: number
+
+function installFakeEngine() {
+  spoken = []
+  cancelCount = 0
+
+  class Utterance {
+    text: string
+    voice: SpeechSynthesisVoice | null = null
+    rate = 1
+    pitch = 1
+    volume = 1
+    lang = ''
+    onend: (() => void) | null = null
+    onerror: (() => void) | null = null
+    constructor(text: string) {
+      this.text = text
     }
-    vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance)
-    vi.stubGlobal('speechSynthesis', {
-      getVoices: () => [voice('Samantha', 'en-US')],
-      speak: (u: SpeechSynthesisUtterance) => spoken.push(u),
-      cancel: () => {
-        cancelCount += 1
-      },
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    })
-  })
+  }
 
-  afterEach(() => {
-    vi.unstubAllGlobals()
+  vi.stubGlobal('SpeechSynthesisUtterance', Utterance)
+  vi.stubGlobal('speechSynthesis', {
+    getVoices: () => [voice('Samantha', 'en-US')],
+    speak: (u: FakeUtterance) => spoken.push(u),
+    cancel: () => {
+      cancelCount += 1
+      // Real engines fire onend for the utterance they interrupt.
+      const pending = spoken[spoken.length - 1]
+      pending?.onend?.()
+    },
+    addEventListener: () => {},
+    removeEventListener: () => {},
   })
+}
+
+/** Pretend the browser finished saying the most recent utterance. */
+function finishCurrent() {
+  const current = spoken[spoken.length - 1]
+  act(() => current.onend?.())
+}
+
+describe('useSpeech', () => {
+  beforeEach(installFakeEngine)
+  afterEach(() => vi.unstubAllGlobals())
 
   it('reports support when speechSynthesis exists', () => {
     const { result } = renderHook(() => useSpeech())
@@ -109,5 +124,99 @@ describe('useSpeech', () => {
     expect(result.current.isSupported).toBe(false)
     act(() => result.current.speak('hello'))
     expect(spoken).toHaveLength(0)
+  })
+})
+
+describe('useSpeech speakSequence', () => {
+  beforeEach(installFakeEngine)
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('speaks only the first word up front', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speakSequence(['dog face', 'red apple']))
+    expect(spoken.map((u) => u.text)).toEqual(['dog face'])
+  })
+
+  it('advances to the next word when the current one ends', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speakSequence(['dog face', 'red apple']))
+    finishCurrent()
+    expect(spoken.map((u) => u.text)).toEqual(['dog face', 'red apple'])
+  })
+
+  it('reports the position it is speaking', () => {
+    const { result } = renderHook(() => useSpeech())
+    expect(result.current.speakingIndex).toBeNull()
+
+    act(() => result.current.speakSequence(['dog face', 'red apple']))
+    expect(result.current.speakingIndex).toBe(0)
+
+    finishCurrent()
+    expect(result.current.speakingIndex).toBe(1)
+  })
+
+  it('clears the position once the last word ends', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speakSequence(['dog face', 'red apple']))
+    finishCurrent()
+    finishCurrent()
+    expect(result.current.speakingIndex).toBeNull()
+    expect(spoken).toHaveLength(2)
+  })
+
+  it('does nothing for an empty list', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speakSequence([]))
+    expect(spoken).toHaveLength(0)
+    expect(result.current.speakingIndex).toBeNull()
+  })
+
+  it('starts a new run cleanly when pressed twice', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speakSequence(['one', 'two', 'three']))
+    act(() => result.current.speakSequence(['alpha', 'beta']))
+    expect(spoken.map((u) => u.text)).toEqual(['one', 'alpha'])
+    expect(result.current.speakingIndex).toBe(0)
+
+    finishCurrent()
+    expect(spoken.map((u) => u.text)).toEqual(['one', 'alpha', 'beta'])
+  })
+})
+
+describe('useSpeech stop', () => {
+  beforeEach(installFakeEngine)
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('cancels the engine and clears the position', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speakSequence(['dog face', 'red apple']))
+    act(() => result.current.stop())
+    expect(cancelCount).toBeGreaterThan(0)
+    expect(result.current.speakingIndex).toBeNull()
+  })
+
+  it('does not advance to the next word after stopping', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speakSequence(['dog face', 'red apple', 'potato']))
+    act(() => result.current.stop())
+    expect(spoken.map((u) => u.text)).toEqual(['dog face'])
+  })
+
+  it('a late end event from a stopped run is ignored', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speakSequence(['dog face', 'red apple']))
+    const stale = spoken[0]
+    act(() => result.current.stop())
+    act(() => stale.onend?.())
+    expect(spoken.map((u) => u.text)).toEqual(['dog face'])
+    expect(result.current.speakingIndex).toBeNull()
+  })
+
+  it('a single speak stops the sequence too', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speakSequence(['dog face', 'red apple']))
+    act(() => result.current.speak('tapped word'))
+    expect(result.current.speakingIndex).toBeNull()
+    expect(spoken.map((u) => u.text)).toEqual(['dog face', 'tapped word'])
   })
 })
