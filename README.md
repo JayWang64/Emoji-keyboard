@@ -1,5 +1,7 @@
 # Emoji Keyboard
 
+**▶ [Open the app](https://jaywang64.github.io/Emoji-keyboard/)**
+
 A talking emoji keyboard for young children.
 
 - Tap an emoji and it is spoken out loud straight away.
@@ -48,3 +50,12 @@ An override always wins over the official label.
 
 - Spec: `docs/superpowers/specs/2026-08-15-emoji-sentence-composer-design.md`
 - Plan: `docs/superpowers/plans/2026-08-15-emoji-sentence-composer.md`
+
+## Deploying
+
+Every push to `main` builds the app and publishes it to GitHub Pages, via
+`.github/workflows/deploy.yml`. The workflow runs the tests first, so a broken
+build never goes live.
+
+This needs GitHub Pages set to "GitHub Actions" as its source, under
+Settings > Pages in the repository.
