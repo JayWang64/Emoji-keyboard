@@ -67,20 +67,29 @@ Top to bottom, filling the viewport height:
 Builds the emoji-to-word lookup and exposes the sentence builder.
 
 - `buildLabelMap()` reads `emojibase-data/en/data.json` and returns a
-  `Map<string, string>`. It indexes each entry under its `unicode` string and
-  under a normalized key.
-- `normalize(emoji)` strips variation selectors (`U+FE0F`, `U+FE0E`) so that
-  `❤️` and `❤` both resolve.
-- `lookupLabel(map, emoji)` tries, in order: the `overrides` object, the exact
-  string, the normalized string, the normalized string with skin-tone modifiers
-  (`U+1F3FB`-`U+1F3FF`) removed. Falls back to the string `"symbol"`.
+  `Map<string, string>`. Each entry has an `emoji` field, an optional `text`
+  field, a `label`, and an optional nested `skins` array of the same shape.
+  Every entry and every nested skin is indexed under `normalize()` of both its
+  `emoji` and its `text` string. The resulting map has roughly 3,979 keys.
+- `normalize(emoji)` strips variation selectors `U+FE0F` and `U+FE0E`. This is
+  required, not cosmetic: emojibase stores thumbs up as `U+1F44D U+FE0F` while
+  a picker or keyboard emits bare `U+1F44D`, so an unnormalized map misses it.
+- `stripTones(emoji)` removes the skin-tone modifiers `U+1F3FB`-`U+1F3FF`.
+- `lookupLabel(map, emoji)` tries, in order:
+  1. `overrides[emoji]`
+  2. `map.get(stripTones(normalize(emoji)))`
+  3. `map.get(normalize(emoji))`
+
+  and falls back to `"symbol"`.
 - `overrides: Record<string, string>` is exported and empty. This is the hook
   for kid-friendly words later.
 - `buildSentence(map, emojis)` maps each emoji through `lookupLabel` and joins
   with `", "`. Empty input returns the empty string.
 
-Order matters in `lookupLabel`: skin-tone stripping is last, so an emoji whose
-own label mentions a tone still wins on the exact match.
+Order matters in `lookupLabel`: tone-stripping comes before the plain lookup on
+purpose. The tone-stripped key yields `"thumbs up"` where the exact key would
+yield `"thumbs up: medium skin tone"`, and the shorter word is the better one to
+say to a child.
 
 ### `src/useSpeech.ts`
 
@@ -145,9 +154,11 @@ Vitest, no browser needed.
 `labels.test.ts`:
 
 - Plain emoji resolves to its label (`🐶` -> `dog face`).
-- Emoji carrying a variation selector resolves (`❤️`).
+- Emoji with and without a variation selector both resolve
+  (`❤️` and `❤` -> `red heart`; bare `👍` -> `thumbs up`).
 - Skin-toned emoji falls back to the base emoji's label (`👍🏽` -> `thumbs up`).
-- Multi-part ZWJ emoji resolves (`👨‍👩‍👧`).
+- Multi-part ZWJ emoji resolves (`👨‍👩‍👧` -> `family: man, woman, girl`;
+  `🏳️‍🌈` -> `rainbow flag`).
 - Unknown input returns `"symbol"`.
 - An entry in `overrides` beats the emojibase label.
 - `buildSentence` joins in tap order with `", "`, and returns `""` for `[]`.
