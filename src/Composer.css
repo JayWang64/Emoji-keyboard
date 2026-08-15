@@ -12,23 +12,24 @@
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
-  align-items: center;
   gap: 4px;
-  min-height: 64px;
-  /* Grows down to roughly three rows, then scrolls rather than eating
-     the picker below it. */
-  max-height: 200px;
+  /* Height is set inline and never changes. Emoji shrink to fit instead. */
+  box-sizing: content-box;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 4px;
 }
 
 .composer-emoji {
-  font-size: 2.75rem;
+  /* Font size and width are set inline, from the emoji count and the strip
+     width. Content-box keeps the padding outside that width, so the fit
+     maths in emojiSize.ts stays true. */
+  box-sizing: content-box;
   line-height: 1;
   flex-shrink: 0;
+  text-align: center;
   border-radius: 12px;
-  padding: 2px 4px;
+  padding: 0 4px;
   /* Only transform and colour animate. Neither reflows, so the highlight
      cannot change the height of the box. */
   transition:

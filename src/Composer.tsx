@@ -1,4 +1,31 @@
+import { useEffect, useRef, useState } from 'react'
+import { STRIP_CONTENT_HEIGHT, emojiSizeFor, usableWidth } from './emojiSize'
 import './Composer.css'
+
+/** Tracks how wide the strip is, so emoji can be sized to fit two rows. */
+function useMeasuredWidth<T extends HTMLElement>() {
+  const ref = useRef<T>(null)
+  const [width, setWidth] = useState(0)
+
+  useEffect(() => {
+    const node = ref.current
+    if (!node) return
+
+    const measure = () => setWidth(node.clientWidth)
+    measure()
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure)
+      return () => window.removeEventListener('resize', measure)
+    }
+
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
+  return { ref, width }
+}
 
 export type ComposerProps = {
   emojis: string[]
@@ -25,14 +52,27 @@ export default function Composer({
   const done = isSpeaking ? speakingIndex + 1 : 0
   const percent = isEmpty ? 0 : (done / emojis.length) * 100
 
+  const { ref: stripRef, width } = useMeasuredWidth<HTMLDivElement>()
+  const emojiSize = emojiSizeFor(emojis.length, usableWidth(width))
+
   return (
     <section className="composer">
-      <div className="composer-strip" data-testid="strip">
+      {/* Fixed height, always two full-size rows. Emoji shrink to fit rather
+          than the box growing, so the keyboard below never moves. */}
+      <div
+        className="composer-strip"
+        data-testid="strip"
+        ref={stripRef}
+        style={{ height: `${STRIP_CONTENT_HEIGHT}px` }}
+      >
         {emojis.map((emoji, index) => (
           <span
             className={`composer-emoji${index === speakingIndex ? ' is-speaking' : ''}`}
             data-testid="composer-emoji"
             key={`${emoji}-${index}`}
+            // Width is pinned as well as font size: an emoji glyph draws
+            // wider than its font size, which would break the fit maths.
+            style={{ fontSize: `${emojiSize}px`, width: `${emojiSize}px` }}
           >
             {emoji}
           </span>

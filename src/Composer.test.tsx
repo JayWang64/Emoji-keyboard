@@ -1,8 +1,9 @@
 import type { ComponentProps } from 'react'
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Composer from './Composer'
+import { MAX_EMOJI_SIZE } from './emojiSize'
 
 const noop = () => {}
 
@@ -97,6 +98,22 @@ describe('Composer while speaking', () => {
   it('keeps the progress track in place when silent, so nothing jumps', () => {
     setup({ speakingIndex: null })
     expect(screen.getByTestId('progress-track')).toBeInTheDocument()
+  })
+
+  it('holds the strip at a fixed height so the keyboard cannot move', () => {
+    setup({ emojis: [] })
+    const empty = screen.getByTestId('strip').style.height
+    cleanup()
+    setup({ emojis: Array.from({ length: 30 }, () => '🐶') })
+    expect(screen.getByTestId('strip').style.height).toBe(empty)
+    expect(empty).not.toBe('')
+  })
+
+  it('sizes each emoji explicitly so it can shrink as the strip fills', () => {
+    setup({ emojis: ['🐶', '🍎'] })
+    for (const el of screen.getAllByTestId('composer-emoji')) {
+      expect(el.style.fontSize).toBe(`${MAX_EMOJI_SIZE}px`)
+    }
   })
 
   it('keeps the hint line in place once emojis are added', () => {

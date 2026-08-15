@@ -204,3 +204,28 @@ Approved after the first build shipped.
   about three rows (`max-height: 200px`), then scrolls vertically.
 - Stop shares Play's slot rather than being a fourth button, to keep the touch
   targets large on a phone.
+
+---
+
+## Amendment 2, 2026-08-15: fixed-height strip, shrinking emoji
+
+The wrapping strip from the first amendment still grew a row at a time, which
+moved the picker underneath it. That was the same jumpiness, one step later.
+
+- The strip now has a fixed height of `STRIP_CONTENT_HEIGHT` (two full-size
+  rows). It never grows.
+- `src/emojiSize.ts` holds the fit maths as pure functions:
+  `emojiSizeFor(count, width)` returns the pixel size that fits `count` emoji
+  into two rows of a strip `width` wide, clamped to 18-44px.
+  `usableWidth(clientWidth)` subtracts the strip's own padding, which
+  `clientWidth` includes.
+  `capacityBeforeScrolling(width)` reports how many fit before scrolling.
+- `Composer` measures the strip with a `ResizeObserver` (falling back to a
+  window resize listener) and sets each emoji's font size *and* width inline.
+  Pinning the width matters: an emoji glyph draws wider than its font size, so
+  without it the fit maths is wrong and rows overflow early.
+- Because the strip keeps its full-size height while the emoji shrink, more
+  than two rows fit once they are small. Measured: 60 emoji with no scrolling
+  at 430px and 820px wide, first scroll at 56 on a 390px screen.
+- Verified across three viewport widths that the picker's top edge stays at a
+  single pixel value across 60 taps.
