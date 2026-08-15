@@ -1,32 +1,47 @@
-# React + TypeScript + Vite
+# Emoji Keyboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A talking emoji keyboard for young children.
 
-Currently, two official plugins are available:
+- Tap an emoji and it is spoken out loud straight away.
+- Taps collect in a strip at the top.
+- Press **Play** and the whole strip is read as one sentence.
+- **Undo** removes the last emoji. **Clear** empties the strip.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Running it
 
-## React Compiler
+    npm install
+    npm run dev
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Then open the address the terminal prints.
 
-## Expanding the Oxlint configuration
+## Testing
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+    npm test
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+## How the voice works
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+The browser's built-in Web Speech API does the talking. There is no server, no
+account and no API key. Voice quality depends on the device.
+
+The app prefers a female-sounding English voice, and speaks slightly fast and
+noticeably high so it sounds bright rather than robotic.
+
+## How the words are chosen
+
+Every emoji's word comes from [`emojibase-data`](https://github.com/milesj/emojibase),
+which carries the official CLDR label for each emoji, such as "red apple" or
+"dog face". Nothing is hand-typed.
+
+To use friendlier words, add entries to `overrides` in `src/labels.ts`:
+
+    export const overrides: Record<string, string> = {
+      '🐶': 'doggy',
+      '🚗': 'car',
+    }
+
+An override always wins over the official label.
+
+## Design docs
+
+- Spec: `docs/superpowers/specs/2026-08-15-emoji-sentence-composer-design.md`
+- Plan: `docs/superpowers/plans/2026-08-15-emoji-sentence-composer.md`
