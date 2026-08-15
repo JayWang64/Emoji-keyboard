@@ -29,6 +29,8 @@
   flex-shrink: 0;
   border-radius: 12px;
   padding: 2px 4px;
+  /* Only transform and colour animate. Neither reflows, so the highlight
+     cannot change the height of the box. */
   transition:
     transform 120ms ease-out,
     background-color 120ms ease-out;
@@ -59,6 +61,8 @@
   color: #6c5bbf;
   font-size: 0.95rem;
   text-align: center;
+  /* Holds its line even when blank, so the keyboard below never shifts. */
+  min-height: 1.2em;
 }
 
 .composer-buttons {

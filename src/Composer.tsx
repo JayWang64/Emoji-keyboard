@@ -39,25 +39,35 @@ export default function Composer({
         ))}
       </div>
 
-      {isSpeaking && (
+      {/* The track and the hint line are always here, even when they have
+          nothing to show, so turning them on never shoves the keyboard down. */}
+      <div
+        className="composer-progress"
+        data-testid="progress-track"
+        {...(isSpeaking
+          ? {
+              role: 'progressbar',
+              'aria-label': 'Reading progress',
+              'aria-valuenow': done,
+              'aria-valuemin': 0,
+              'aria-valuemax': emojis.length,
+            }
+          : {})}
+      >
         <div
-          className="composer-progress"
-          role="progressbar"
-          aria-label="Reading progress"
-          aria-valuenow={done}
-          aria-valuemin={0}
-          aria-valuemax={emojis.length}
-        >
-          <div
-            className="composer-progress-fill"
-            data-testid="progress-fill"
-            style={{ width: `${percent}%` }}
-          />
-        </div>
-      )}
+          className="composer-progress-fill"
+          data-testid="progress-fill"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
 
-      {isEmpty && <p className="composer-hint">Tap an emoji to start</p>}
-      {!canSpeak && <p className="composer-hint">This device has no voice</p>}
+      <p className="composer-hint" data-testid="hint">
+        {!canSpeak
+          ? 'This device has no voice'
+          : isEmpty
+            ? 'Tap an emoji to start'
+            : ' '}
+      </p>
 
       <div className="composer-buttons">
         {canSpeak &&

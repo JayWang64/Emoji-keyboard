@@ -88,9 +88,21 @@ describe('Composer while speaking', () => {
     expect(screen.getByTestId('progress-fill')).toHaveStyle({ width: '50%' })
   })
 
-  it('hides the progress bar when silent', () => {
+  it('reports no progress when silent', () => {
     setup({ speakingIndex: null })
     expect(screen.queryByRole('progressbar')).toBeNull()
+    expect(screen.getByTestId('progress-fill')).toHaveStyle({ width: '0%' })
+  })
+
+  it('keeps the progress track in place when silent, so nothing jumps', () => {
+    setup({ speakingIndex: null })
+    expect(screen.getByTestId('progress-track')).toBeInTheDocument()
+  })
+
+  it('keeps the hint line in place once emojis are added', () => {
+    setup({ emojis: ['🐶'] })
+    expect(screen.getByTestId('hint')).toBeInTheDocument()
+    expect(screen.getByTestId('hint').textContent?.trim()).toBe('')
   })
 
   it('swaps Play for Stop while speaking', () => {
