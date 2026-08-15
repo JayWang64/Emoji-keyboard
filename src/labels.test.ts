@@ -1,0 +1,103 @@
+import { describe, it, expect } from 'vitest'
+import {
+  buildLabelMap,
+  buildSentence,
+  lookupLabel,
+  normalize,
+  overrides,
+  stripTones,
+} from './labels'
+
+const map = buildLabelMap()
+
+describe('normalize', () => {
+  it('strips the emoji variation selector', () => {
+    expect(normalize('❤️')).toBe('❤')
+  })
+
+  it('strips the text variation selector', () => {
+    expect(normalize('❤︎')).toBe('❤')
+  })
+
+  it('leaves a plain emoji alone', () => {
+    expect(normalize('🐶')).toBe('🐶')
+  })
+})
+
+describe('stripTones', () => {
+  it('removes a skin tone modifier', () => {
+    expect(stripTones('👍🏽')).toBe('👍')
+  })
+
+  it('leaves an untoned emoji alone', () => {
+    expect(stripTones('👍')).toBe('👍')
+  })
+})
+
+describe('buildLabelMap', () => {
+  it('indexes a large number of emoji', () => {
+    expect(map.size).toBeGreaterThan(3000)
+  })
+})
+
+describe('lookupLabel', () => {
+  it('resolves a plain emoji', () => {
+    expect(lookupLabel(map, '🐶')).toBe('dog face')
+  })
+
+  it('resolves an emoji that carries a variation selector', () => {
+    expect(lookupLabel(map, '❤️')).toBe('red heart')
+  })
+
+  it('resolves the same emoji without its variation selector', () => {
+    expect(lookupLabel(map, '❤')).toBe('red heart')
+  })
+
+  it('resolves an emoji the data stores with a variation selector', () => {
+    expect(lookupLabel(map, '👍')).toBe('thumbs up')
+  })
+
+  it('drops the skin tone qualifier from the spoken word', () => {
+    expect(lookupLabel(map, '👍🏽')).toBe('thumbs up')
+    expect(lookupLabel(map, '👋🏿')).toBe('waving hand')
+  })
+
+  it('resolves multi-part sequences', () => {
+    expect(lookupLabel(map, '👨‍👩‍👧')).toBe('family: man, woman, girl')
+    expect(lookupLabel(map, '🏳️‍🌈')).toBe('rainbow flag')
+  })
+
+  it('falls back to symbol for unknown input', () => {
+    expect(lookupLabel(map, 'abc')).toBe('symbol')
+    expect(lookupLabel(map, '')).toBe('symbol')
+  })
+
+  it('lets an override win over the emojibase label', () => {
+    overrides['🐶'] = 'doggy'
+    try {
+      expect(lookupLabel(map, '🐶')).toBe('doggy')
+    } finally {
+      delete overrides['🐶']
+    }
+  })
+
+  it('ships with no overrides', () => {
+    expect(Object.keys(overrides)).toHaveLength(0)
+  })
+})
+
+describe('buildSentence', () => {
+  it('joins words in tap order', () => {
+    expect(buildSentence(map, ['🐶', '🍎', '😀'])).toBe(
+      'dog face, red apple, grinning face',
+    )
+  })
+
+  it('returns an empty string for no emoji', () => {
+    expect(buildSentence(map, [])).toBe('')
+  })
+
+  it('handles a single emoji', () => {
+    expect(buildSentence(map, ['🥔'])).toBe('potato')
+  })
+})
