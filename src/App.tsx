@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import Composer from './Composer'
+import Header from './Header'
 import EmojiPicker from './EmojiPicker'
 import { buildLabelMap, buildWords, lookupLabel } from './labels'
 import { useSpeech } from './useSpeech'
@@ -7,7 +8,15 @@ import './App.css'
 
 export default function App() {
   const labelMap = useMemo(() => buildLabelMap(), [])
-  const { isSupported, speakingIndex, speak, speakSequence, stop } = useSpeech()
+  const {
+    isSupported,
+    speakingIndex,
+    spokenText,
+    speak,
+    speakSequence,
+    stop,
+    clearWord,
+  } = useSpeech()
   const [emojis, setEmojis] = useState<string[]>([])
 
   const handleSelect = useCallback(
@@ -32,25 +41,29 @@ export default function App() {
 
   const handleClear = useCallback(() => {
     stop()
+    clearWord()
     setEmojis([])
-  }, [stop])
+  }, [clearWord, stop])
 
   return (
     <main className="app">
-      <h1 className="app-title">Emoji Keyboard</h1>
+      <Header word={spokenText} />
 
-      <Composer
-        emojis={emojis}
-        canSpeak={isSupported}
-        speakingIndex={speakingIndex}
-        onPlay={handlePlay}
-        onStop={stop}
-        onBackspace={handleBackspace}
-        onClear={handleClear}
-      />
+      {/* Stacked on a phone, side by side from 900px up. */}
+      <div className="app-body">
+        <Composer
+          emojis={emojis}
+          canSpeak={isSupported}
+          speakingIndex={speakingIndex}
+          onPlay={handlePlay}
+          onStop={stop}
+          onBackspace={handleBackspace}
+          onClear={handleClear}
+        />
 
-      <div className="app-picker">
-        <EmojiPicker onEmojiSelect={handleSelect} />
+        <div className="app-picker">
+          <EmojiPicker onEmojiSelect={handleSelect} />
+        </div>
       </div>
     </main>
   )

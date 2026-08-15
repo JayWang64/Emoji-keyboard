@@ -6,11 +6,14 @@ const spoken: string[] = []
 const sequences: string[][] = []
 let stopCount = 0
 let speakingIndex: number | null = null
+let spokenText: string | null = null
+let clearWordCount = 0
 
 vi.mock('./useSpeech', () => ({
   useSpeech: () => ({
     isSupported: true,
     speakingIndex,
+    spokenText,
     speak: (text: string) => {
       spoken.push(text)
     },
@@ -19,6 +22,9 @@ vi.mock('./useSpeech', () => ({
     },
     stop: () => {
       stopCount += 1
+    },
+    clearWord: () => {
+      clearWordCount += 1
     },
   }),
 }))
@@ -50,6 +56,8 @@ describe('App', () => {
     sequences.length = 0
     stopCount = 0
     speakingIndex = null
+    spokenText = null
+    clearWordCount = 0
   })
 
   it('speaks each emoji as it is tapped', async () => {
@@ -112,5 +120,52 @@ describe('App', () => {
     await userEvent.click(screen.getByText('pick dog'))
     await userEvent.click(screen.getByRole('button', { name: /clear/i }))
     expect(screen.getByTestId('strip').textContent).toBe('')
+  })
+})
+
+describe('App header', () => {
+  beforeEach(() => {
+    spoken.length = 0
+    sequences.length = 0
+    stopCount = 0
+    speakingIndex = null
+    spokenText = null
+    clearWordCount = 0
+  })
+
+  it('shows the word that is being spoken', () => {
+    spokenText = 'red apple'
+    render(<App />)
+    expect(screen.getByTestId('spoken-word')).toHaveTextContent('red apple')
+  })
+
+  it('shows no word when silent', () => {
+    render(<App />)
+    expect(screen.getByTestId('spoken-word').textContent?.trim()).toBe('')
+  })
+})
+
+describe('App clearing', () => {
+  beforeEach(() => {
+    spoken.length = 0
+    sequences.length = 0
+    stopCount = 0
+    speakingIndex = null
+    spokenText = null
+    clearWordCount = 0
+  })
+
+  it('Clear wipes the word as well as the strip', async () => {
+    render(<App />)
+    await userEvent.click(screen.getByText('pick dog'))
+    await userEvent.click(screen.getByRole('button', { name: /clear/i }))
+    expect(clearWordCount).toBe(1)
+  })
+
+  it('Undo leaves the word alone', async () => {
+    render(<App />)
+    await userEvent.click(screen.getByText('pick dog'))
+    await userEvent.click(screen.getByRole('button', { name: /undo/i }))
+    expect(clearWordCount).toBe(0)
   })
 })

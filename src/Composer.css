@@ -6,6 +6,7 @@
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 2px 10px rgba(74, 63, 138, 0.15);
+  min-height: 0;
 }
 
 .composer-strip {
@@ -13,7 +14,10 @@
   flex-wrap: wrap;
   align-content: flex-start;
   gap: 4px;
-  /* Height is set inline and never changes. Emoji shrink to fit instead. */
+  /* Two full rows on a phone. Emoji shrink to fit rather than the box
+     growing, so the picker below never moves. */
+  height: 108px;
+  flex: none;
   box-sizing: content-box;
   overflow-y: auto;
   overflow-x: hidden;
@@ -110,5 +114,17 @@
 
   .composer-emoji.is-speaking {
     transform: none;
+  }
+}
+
+/* Desktop: the composer owns the left column, and the box fills it. */
+@media (min-width: 900px) {
+  .composer {
+    height: 100%;
+  }
+
+  .composer-strip {
+    height: auto;
+    flex: 1;
   }
 }

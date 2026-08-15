@@ -8,11 +8,12 @@
   padding: 8px;
 }
 
-.app-title {
-  margin: 0;
-  font-size: 1.3rem;
-  color: #4a3f8a;
-  text-align: center;
+.app-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
 }
 
 .app-picker {
@@ -32,4 +33,28 @@
   min-height: 0;
   height: 100%;
   width: 100%;
+}
+
+/* Desktop: writing box on the left, picker as a tall column on the right. */
+@media (min-width: 900px) {
+  .app {
+    max-width: 1200px;
+  }
+
+  .app-body {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .app-body > .composer {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .app-picker {
+    /* The picker has a natural width. Give it a fixed column so the
+       writing box takes the rest. */
+    flex: 0 0 380px;
+    min-width: 0;
+  }
 }

@@ -1,17 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
-import { STRIP_CONTENT_HEIGHT, emojiSizeFor, usableWidth } from './emojiSize'
+import { emojiSizeFor, usableHeight, usableWidth } from './emojiSize'
 import './Composer.css'
 
-/** Tracks how wide the strip is, so emoji can be sized to fit two rows. */
-function useMeasuredWidth<T extends HTMLElement>() {
+/** Tracks the strip's box, so emoji can be sized to fill it. */
+function useMeasuredBox<T extends HTMLElement>() {
   const ref = useRef<T>(null)
-  const [width, setWidth] = useState(0)
+  const [box, setBox] = useState({ width: 0, height: 0 })
 
   useEffect(() => {
     const node = ref.current
     if (!node) return
 
-    const measure = () => setWidth(node.clientWidth)
+    const measure = () =>
+      setBox((current) =>
+        current.width === node.clientWidth && current.height === node.clientHeight
+          ? current
+          : { width: node.clientWidth, height: node.clientHeight },
+      )
     measure()
 
     if (typeof ResizeObserver === 'undefined') {
@@ -24,7 +29,7 @@ function useMeasuredWidth<T extends HTMLElement>() {
     return () => observer.disconnect()
   }, [])
 
-  return { ref, width }
+  return { ref, box }
 }
 
 export type ComposerProps = {
@@ -52,19 +57,19 @@ export default function Composer({
   const done = isSpeaking ? speakingIndex + 1 : 0
   const percent = isEmpty ? 0 : (done / emojis.length) * 100
 
-  const { ref: stripRef, width } = useMeasuredWidth<HTMLDivElement>()
-  const emojiSize = emojiSizeFor(emojis.length, usableWidth(width))
+  const { ref: stripRef, box } = useMeasuredBox<HTMLDivElement>()
+  const emojiSize = emojiSizeFor(
+    emojis.length,
+    usableWidth(box.width),
+    usableHeight(box.height),
+  )
 
   return (
     <section className="composer">
-      {/* Fixed height, always two full-size rows. Emoji shrink to fit rather
-          than the box growing, so the keyboard below never moves. */}
-      <div
-        className="composer-strip"
-        data-testid="strip"
-        ref={stripRef}
-        style={{ height: `${STRIP_CONTENT_HEIGHT}px` }}
-      >
+      {/* The box never grows. Emoji shrink to fit it, so the picker never
+          moves. Its height comes from CSS: two rows on a phone, the whole
+          left column on a desktop. */}
+      <div className="composer-strip" data-testid="strip" ref={stripRef}>
         {emojis.map((emoji, index) => (
           <span
             className={`composer-emoji${index === speakingIndex ? ' is-speaking' : ''}`}

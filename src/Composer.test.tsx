@@ -100,13 +100,14 @@ describe('Composer while speaking', () => {
     expect(screen.getByTestId('progress-track')).toBeInTheDocument()
   })
 
-  it('holds the strip at a fixed height so the keyboard cannot move', () => {
+  it('never sizes the strip from the emoji count, so the picker cannot move', () => {
+    // Height comes from CSS: a fixed two rows on a phone, the full column on
+    // a desktop. Nothing here may depend on how many emoji there are.
     setup({ emojis: [] })
-    const empty = screen.getByTestId('strip').style.height
+    const empty = screen.getByTestId('strip').getAttribute('style')
     cleanup()
     setup({ emojis: Array.from({ length: 30 }, () => '🐶') })
-    expect(screen.getByTestId('strip').style.height).toBe(empty)
-    expect(empty).not.toBe('')
+    expect(screen.getByTestId('strip').getAttribute('style')).toBe(empty)
   })
 
   it('sizes each emoji explicitly so it can shrink as the strip fills', () => {

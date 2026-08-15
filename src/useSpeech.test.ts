@@ -63,23 +63,35 @@ function installFakeEngine() {
   }
 
   vi.stubGlobal('SpeechSynthesisUtterance', Utterance)
-  vi.stubGlobal('speechSynthesis', {
+  const engine = {
+    speaking: false,
+    pending: false,
+    paused: false,
     getVoices: () => [voice('Samantha', 'en-US')],
-    speak: (u: FakeUtterance) => spoken.push(u),
+    speak: (u: FakeUtterance) => {
+      spoken.push(u)
+      engine.speaking = true
+    },
     cancel: () => {
       cancelCount += 1
+      engine.speaking = false
       // Real engines fire onend for the utterance they interrupt.
       const pending = spoken[spoken.length - 1]
       pending?.onend?.()
     },
+    resume: () => {
+      engine.paused = false
+    },
     addEventListener: () => {},
     removeEventListener: () => {},
-  })
+  }
+  vi.stubGlobal('speechSynthesis', engine)
 }
 
 /** Pretend the browser finished saying the most recent utterance. */
 function finishCurrent() {
   const current = spoken[spoken.length - 1]
+  ;(window.speechSynthesis as unknown as { speaking: boolean }).speaking = false
   act(() => current.onend?.())
 }
 
@@ -92,12 +104,27 @@ describe('useSpeech', () => {
     expect(result.current.isSupported).toBe(true)
   })
 
-  it('cancels then speaks once', () => {
+  it('speaks once', () => {
     const { result } = renderHook(() => useSpeech())
     act(() => result.current.speak('dog face'))
-    expect(cancelCount).toBe(1)
     expect(spoken).toHaveLength(1)
     expect(spoken[0].text).toBe('dog face')
+  })
+
+  it('does not cancel when the engine is idle', () => {
+    // Chrome drops an utterance queued in the same tick as a needless
+    // cancel, which silences the word entirely.
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speak('dog face'))
+    expect(cancelCount).toBe(0)
+  })
+
+  it('cancels the word in progress when a new one arrives', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speak('dog face'))
+    act(() => result.current.speak('red apple'))
+    expect(cancelCount).toBe(1)
+    expect(spoken.map((u) => u.text)).toEqual(['dog face', 'red apple'])
   })
 
   it('applies the configured rate, pitch and voice', () => {
@@ -218,5 +245,52 @@ describe('useSpeech stop', () => {
     act(() => result.current.speak('tapped word'))
     expect(result.current.speakingIndex).toBeNull()
     expect(spoken.map((u) => u.text)).toEqual(['dog face', 'tapped word'])
+  })
+})
+
+describe('useSpeech spokenText', () => {
+  beforeEach(installFakeEngine)
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('is empty when nothing has been said', () => {
+    const { result } = renderHook(() => useSpeech())
+    expect(result.current.spokenText).toBeNull()
+  })
+
+  it('reports the word a single speak is saying', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speak('dog face'))
+    expect(result.current.spokenText).toBe('dog face')
+  })
+
+  it('keeps the word up after it finishes, long enough to read', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speak('dog face'))
+    finishCurrent()
+    expect(result.current.spokenText).toBe('dog face')
+  })
+
+  it('follows a sequence word by word', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speakSequence(['dog face', 'red apple']))
+    expect(result.current.spokenText).toBe('dog face')
+    finishCurrent()
+    expect(result.current.spokenText).toBe('red apple')
+    finishCurrent()
+    expect(result.current.spokenText).toBe('red apple')
+  })
+
+  it('keeps the last word when stopped', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speakSequence(['dog face', 'red apple']))
+    act(() => result.current.stop())
+    expect(result.current.spokenText).toBe('dog face')
+  })
+
+  it('clearWord wipes it', () => {
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.speak('dog face'))
+    act(() => result.current.clearWord())
+    expect(result.current.spokenText).toBeNull()
   })
 })
