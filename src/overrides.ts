@@ -1,128 +1,131 @@
 import { normalize } from './normalize'
 
 /**
- * Kid-friendly words that beat the official emojibase label.
+ * Better words than the official emojibase labels, pitched at readers of
+ * about 10 to 13.
  *
  * Only the clunky ones are listed. Anything absent keeps its official word,
- * which is usually fine: "pizza", "elephant", "rainbow", "birthday cake".
+ * which is usually already right: "pizza", "elephant", "rainbow", "sun".
  *
  * Rules of thumb used here:
- *  - Drop the trailing "face". A four-year-old says "dog", not "dog face".
- *  - Say the everyday word: "car", not "automobile"; "train", not
- *    "locomotive".
- *  - Say the feeling, not the description: "laughing", not "face with tears
- *    of joy"; "rain", not "cloud with rain".
+ *  - Every word is distinct. Three emoji that all say "happy" is worse than
+ *    the labels this replaces, because it flattens the differences a child
+ *    is actually picking between. A test enforces this.
+ *  - Drop the mechanical description. "dog", not "dog face"; "rain", not
+ *    "cloud with rain"; "car", not "automobile".
+ *  - Reach for the precise word rather than the simplest one. "smug" beats
+ *    "pleased with himself"; "exasperated" beats "annoyed".
  *
  * Keys may be written with or without the invisible variation selector; they
  * are normalized below.
  */
 const RAW: Record<string, string> = {
-  // Happy faces
-  '😀': 'happy',
-  '😃': 'happy',
-  '😄': 'happy',
-  '😁': 'big smile',
-  '😆': 'giggling',
-  '😅': 'phew',
-  '🤣': 'laughing so hard',
-  '😂': 'laughing',
-  '🙂': 'smiling',
-  '🙃': 'silly',
+  // Cheerful
+  '😀': 'grinning',
+  '😃': 'delighted',
+  '😄': 'cheerful',
+  '😁': 'beaming',
+  '😆': 'cracking up',
+  '😅': 'relieved laugh',
+  '🤣': 'howling with laughter',
+  '😂': 'laughing till it hurts',
+  '🙂': 'pleasant',
+  '🙃': 'being sarcastic',
   '😉': 'winking',
-  '😊': 'happy',
-  '😇': 'angel',
-  '☺️': 'smiling',
+  '😊': 'content',
+  '😇': 'innocent',
+  '☺️': 'serene',
 
-  // Love and kisses
-  '🥰': 'loved',
-  '😍': 'in love',
+  // Affection
+  '🥰': 'adoring',
+  '😍': 'smitten',
   '😘': 'blowing a kiss',
-  '😗': 'kiss',
-  '😚': 'kiss',
-  '😙': 'kiss',
-  '💘': 'love arrow',
-  '💝': 'heart gift',
+  '😗': 'kissing',
+  '😚': 'sweet kiss',
+  '😙': 'happy kiss',
+  '💘': 'struck by cupid',
+  '💝': 'gift of love',
 
-  // Silly faces
-  '😋': 'yummy',
-  '😛': 'tongue out',
-  '😜': 'silly',
-  '🤪': 'goofy',
-  '😝': 'silly',
-  '🤑': 'rich',
-  '🤗': 'hug',
-  '🤭': 'oops',
-  '🤫': 'shh',
-  '🤔': 'thinking',
-  '🤐': 'zipped lips',
-  '🤨': 'suspicious',
+  // Playful
+  '😋': 'delicious',
+  '😛': 'cheeky',
+  '😜': 'playful',
+  '🤪': 'wacky',
+  '😝': 'teasing',
+  '🤑': 'greedy',
+  '🤗': 'welcoming hug',
+  '🤭': 'stifling a giggle',
+  '🤫': 'keeping a secret',
+  '🤔': 'pondering',
+  '🤐': 'lips sealed',
+  '🤨': 'skeptical',
   '🤠': 'cowboy',
-  '🥳': 'party',
-  '😎': 'cool',
-  '🤓': 'nerdy',
-  '🧐': 'curious',
+  '🥳': 'celebrating',
+  '😎': 'effortlessly cool',
+  '🤓': 'studious',
+  '🧐': 'scrutinizing',
   '🤡': 'clown',
   '💩': 'poop',
 
-  // Blank and grumpy faces
-  '😐': 'blank',
-  '😑': 'blank',
-  '😶': 'no mouth',
-  '😏': 'smirk',
-  '😒': 'not amused',
-  '🙄': 'eye roll',
-  '😬': 'awkward',
+  // Guarded
+  '😐': 'indifferent',
+  '😑': 'deadpan',
+  '😶': 'speechless',
+  '😏': 'smug',
+  '😒': 'unimpressed',
+  '🙄': 'exasperated',
+  '😬': 'cringing',
   '🤥': 'fibbing',
 
-  // Sleepy and sick
-  '😌': 'relieved',
-  '😪': 'sleepy',
+  // Tired and unwell
+  '😌': 'at ease',
+  '😪': 'drowsy',
   '🤤': 'drooling',
-  '😴': 'sleeping',
+  '😴': 'fast asleep',
   '🥱': 'yawning',
-  '😷': 'wearing a mask',
-  '🤒': 'sick',
-  '🤕': 'hurt',
-  '🤢': 'yucky',
+  '😷': 'masked',
+  '🤒': 'feverish',
+  '🤕': 'injured',
+  '🤢': 'queasy',
   '🤧': 'sneezing',
-  '🥵': 'too hot',
+  '🥵': 'overheating',
   '🥶': 'freezing',
-  '🥴': 'dizzy',
-  '😵': 'dizzy',
+  '🥴': 'woozy',
+  '😵': 'knocked out',
 
-  // Sad and scared
-  '😕': 'confused',
-  '😟': 'worried',
-  '🙁': 'sad',
-  '☹️': 'sad',
-  '😔': 'sad',
-  '😥': 'sad',
-  '😓': 'sad',
-  '😮': 'surprised',
-  '😯': 'surprised',
-  '😲': 'shocked',
-  '😳': 'embarrassed',
+  // Unhappy
+  '😕': 'puzzled',
+  '😟': 'concerned',
+  '🙁': 'glum',
+  '☹️': 'unhappy',
+  '😔': 'wistful',
+  '😥': 'disheartened',
+  '😓': 'downcast',
+  '😮': 'agape',
+  '😯': 'taken aback',
+  '😲': 'astonished',
+  '😳': 'flustered',
   '🥺': 'pleading',
-  '😦': 'worried',
-  '😧': 'upset',
-  '😨': 'scared',
-  '😰': 'nervous',
+  '😦': 'dismayed',
+  '😧': 'anguished',
+  '😨': 'fearful',
+  '😰': 'anxious',
   '😢': 'crying',
-  '😭': 'crying a lot',
-  '😱': 'screaming',
+  '😭': 'sobbing',
+  '😱': 'screaming in terror',
   '😖': 'frustrated',
-  '😣': 'struggling',
+  '😣': 'enduring',
   '😞': 'disappointed',
-  '😩': 'tired',
-  '😫': 'so tired',
+  '😩': 'weary',
+  '😫': 'worn out',
 
   // Angry
-  '😤': 'huffy',
-  '😡': 'very angry',
+  '😤': 'fuming',
+  '😡': 'enraged',
   '😠': 'angry',
-  '🤬': 'very angry',
-  '😈': 'mischief',
-  '👿': 'angry devil',
+  '🤬': 'swearing',
+  '😈': 'devious',
+  '👿': 'wrathful',
 
   // Animals
   '🐵': 'monkey',
@@ -139,36 +142,36 @@ const RAW: Record<string, string> = {
 
   // Plants
   '🍀': 'clover',
-  '🍃': 'leaves',
+  '🍃': 'leaves in the wind',
   '🌾': 'wheat',
 
   // Food
   '🌽': 'corn',
   '🍖': 'meat',
   '🥩': 'steak',
-  '🍲': 'soup',
+  '🍲': 'stew',
   '🥣': 'cereal',
   '🍠': 'sweet potato',
   '🍦': 'ice cream',
   '🥛': 'milk',
-  '🥤': 'drink',
-  '🍽️': 'plate',
+  '🥤': 'soft drink',
+  '🍽️': 'place setting',
 
   // Vehicles
-  '🚂': 'train',
+  '🚂': 'steam train',
   '🚗': 'car',
-  '🚙': 'big car',
+  '🚙': 'SUV',
   '🚔': 'police car',
   '🚨': 'siren',
   '🚥': 'traffic light',
-  '🚦': 'traffic light',
+  '🚦': 'traffic signal',
 
-  // Weather and sky
-  // Plain sun keeps its official word: "sun" is already the kid word.
+  // Weather
+  // Plain sun keeps its official word: "sun" is already right.
   '🌞': 'sunshine',
-  '⛅️': 'sun and clouds',
+  '⛅️': 'partly cloudy',
   '🌤️': 'mostly sunny',
-  '🌥️': 'cloudy',
+  '🌥️': 'overcast',
   '🌦️': 'sun shower',
   '🌧️': 'rain',
   '🌨️': 'snow',
@@ -178,13 +181,13 @@ const RAW: Record<string, string> = {
   '☔️': 'umbrella',
   '⛱️': 'beach umbrella',
   '⛄️': 'snowman',
-  '🌚': 'moon',
+  '🌚': 'new moon',
   '🌝': 'full moon',
 
   // Places
   '🌍️': 'earth',
-  '🌎️': 'earth',
-  '🌏️': 'earth',
+  '🌎️': 'the Americas',
+  '🌏️': 'Asia and Australia',
   '🌐': 'globe',
   '🏖️': 'beach',
   '🌄': 'sunrise',
@@ -196,7 +199,7 @@ const RAW: Record<string, string> = {
   '🥉': 'bronze medal',
   '⛳️': 'golf',
   '🧻': 'toilet paper',
-  '📸': 'camera',
+  '📸': 'camera flash',
   '🔊': 'loud',
   '🔈️': 'quiet',
   '🔍️': 'magnifying glass',

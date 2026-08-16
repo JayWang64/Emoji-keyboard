@@ -28,11 +28,15 @@ describe('the override list', () => {
     expect(pointless).toEqual([])
   })
 
-  it('is shorter or plainer than the official word, never longer', () => {
-    const longer = entries.filter(
-      ([emoji, word]) => word.length > (map.get(emoji) ?? '').length,
-    )
-    expect(longer).toEqual([])
+  it('gives every emoji its own word', () => {
+    // Several emoji all saying "happy" is worse than the labels this
+    // replaces: it flattens the distinctions a child is choosing between.
+    const seen = new Map<string, string[]>()
+    for (const [emoji, word] of entries) {
+      seen.set(word, [...(seen.get(word) ?? []), emoji])
+    }
+    const shared = [...seen.entries()].filter(([, list]) => list.length > 1)
+    expect(shared).toEqual([])
   })
 
   it('has no empty words', () => {
@@ -49,13 +53,18 @@ describe('overrides in use', () => {
 
   it('uses the everyday word for vehicles', () => {
     expect(lookupLabel(map, '🚗')).toBe('car')
-    expect(lookupLabel(map, '🚂')).toBe('train')
+    expect(lookupLabel(map, '🚂')).toBe('steam train')
   })
 
   it('says the feeling, not the description', () => {
-    expect(lookupLabel(map, '😂')).toBe('laughing')
-    expect(lookupLabel(map, '😭')).toBe('crying a lot')
+    expect(lookupLabel(map, '😂')).toBe('laughing till it hurts')
+    expect(lookupLabel(map, '😭')).toBe('sobbing')
     expect(lookupLabel(map, '🌧️')).toBe('rain')
+  })
+
+  it('keeps close feelings distinct rather than collapsing them', () => {
+    const words = ['😀', '😃', '😄', '😁', '😊'].map((e) => lookupLabel(map, e))
+    expect(new Set(words).size).toBe(words.length)
   })
 
   it('matches with or without the variation selector', () => {

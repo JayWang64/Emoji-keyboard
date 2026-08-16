@@ -87,7 +87,7 @@ describe('buildWords', () => {
     expect(buildWords(map, ['🐶', '🍎', '😀'])).toEqual([
       'dog',
       'red apple',
-      'happy',
+      'grinning',
     ])
   })
 
