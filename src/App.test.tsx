@@ -64,7 +64,7 @@ describe('App', () => {
     render(<App />)
     await userEvent.click(screen.getByText('pick dog'))
     await userEvent.click(screen.getByText('pick apple'))
-    expect(spoken).toEqual(['dog face', 'red apple'])
+    expect(spoken).toEqual(['dog', 'red apple'])
   })
 
   it('adds tapped emoji to the strip', async () => {
@@ -79,7 +79,7 @@ describe('App', () => {
     await userEvent.click(screen.getByText('pick dog'))
     await userEvent.click(screen.getByText('pick apple'))
     await userEvent.click(screen.getByRole('button', { name: /play/i }))
-    expect(sequences).toEqual([['dog face', 'red apple']])
+    expect(sequences).toEqual([['dog', 'red apple']])
   })
 
   it('highlights the emoji being read', async () => {

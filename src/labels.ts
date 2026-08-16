@@ -1,23 +1,10 @@
 import emojiData from 'emojibase-data/en/data.json'
+import { normalize, stripTones } from './normalize'
+import { overrides } from './overrides'
 
 export type LabelMap = Map<string, string>
 
-/**
- * Kid-friendly words that beat the official emojibase label.
- * Intentionally empty for now. Add entries like { '🐶': 'doggy' } later.
- */
-export const overrides: Record<string, string> = {}
-
-const VARIATION_SELECTORS = /[\u{FE0E}\u{FE0F}]/gu
-const SKIN_TONES = /[\u{1F3FB}-\u{1F3FF}]/gu
-
-export function normalize(input: string): string {
-  return input.replace(VARIATION_SELECTORS, '')
-}
-
-export function stripTones(input: string): string {
-  return input.replace(SKIN_TONES, '')
-}
+export { normalize, stripTones, overrides }
 
 type RawEmoji = {
   label: string
@@ -39,13 +26,17 @@ export function buildLabelMap(): LabelMap {
 }
 
 export function lookupLabel(map: LabelMap, emoji: string): string {
-  const override = overrides[emoji]
+  const normalized = normalize(emoji)
+  const bare = stripTones(normalized)
+
+  // An override always wins. It is looked up on the normalized forms too, so
+  // a key written with or without a variation selector both match.
+  const override = overrides[emoji] ?? overrides[bare] ?? overrides[normalized]
   if (override) return override
 
-  const normalized = normalize(emoji)
   // Tone-stripped first: it yields "thumbs up" where the exact key would
   // yield "thumbs up: medium skin tone".
-  return map.get(stripTones(normalized)) ?? map.get(normalized) ?? 'symbol'
+  return map.get(bare) ?? map.get(normalized) ?? 'symbol'
 }
 
 /** One spoken word per emoji, in tap order. */

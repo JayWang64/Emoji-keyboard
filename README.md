@@ -37,7 +37,12 @@ Every emoji's word comes from [`emojibase-data`](https://github.com/milesj/emoji
 which carries the official CLDR label for each emoji, such as "red apple" or
 "dog face". Nothing is hand-typed.
 
-To use friendlier words, add entries to `overrides` in `src/labels.ts`:
+Some official words are clunky for a small child, so `src/overrides.ts` holds
+a list of friendlier ones: "car" instead of "automobile", "dog" instead of
+"dog face", "laughing" instead of "face with tears of joy". Anything not on
+that list keeps its official word.
+
+To change or add one, edit `src/overrides.ts`:
 
     export const overrides: Record<string, string> = {
       '🐶': 'doggy',

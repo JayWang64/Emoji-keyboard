@@ -42,7 +42,7 @@ describe('buildLabelMap', () => {
 
 describe('lookupLabel', () => {
   it('resolves a plain emoji', () => {
-    expect(lookupLabel(map, '🐶')).toBe('dog face')
+    expect(lookupLabel(map, '🦎')).toBe('lizard')
   })
 
   it('resolves an emoji that carries a variation selector', () => {
@@ -73,25 +73,21 @@ describe('lookupLabel', () => {
   })
 
   it('lets an override win over the emojibase label', () => {
-    overrides['🐶'] = 'doggy'
+    overrides['🦎'] = 'lizzy'
     try {
-      expect(lookupLabel(map, '🐶')).toBe('doggy')
+      expect(lookupLabel(map, '🦎')).toBe('lizzy')
     } finally {
-      delete overrides['🐶']
+      delete overrides['🦎']
     }
-  })
-
-  it('ships with no overrides', () => {
-    expect(Object.keys(overrides)).toHaveLength(0)
   })
 })
 
 describe('buildWords', () => {
   it('returns one word per emoji, in tap order', () => {
     expect(buildWords(map, ['🐶', '🍎', '😀'])).toEqual([
-      'dog face',
+      'dog',
       'red apple',
-      'grinning face',
+      'happy',
     ])
   })
 
